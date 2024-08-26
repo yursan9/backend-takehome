@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      GOMODCACHE: /go/src/app/.modcache
+      GOCACHE: /go/src/app/.cache
+    volumes:
+      - "./app:/go/src/app"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: abc123
+      MYSQL_DATABASE: appdb
+    volumes:
+      - "./.service-db:/var/lib/mysql"
+    ports:
+      - "3333:3306"
