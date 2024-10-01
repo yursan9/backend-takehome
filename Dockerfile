@@ -1,4 +1,4 @@
-FROM golang:1.21.0
+FROM golang:1.23.0
 
 ENV GIN_MODE release
 
