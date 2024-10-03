@@ -21,4 +21,4 @@ services:
       - "./schema.sql:/docker-entrypoint-initdb.d/schema.sql:z"
       - "./.service-db:/var/lib/mysql:z"
     ports:
-      - "3333:3306"
+      - "3306:3306"
