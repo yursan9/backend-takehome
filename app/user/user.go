@@ -30,6 +30,10 @@ type Service struct {
 	db *sql.DB
 }
 
+func NewService(db *sql.DB) *Service {
+	return &Service{db: db}
+}
+
 func (s *Service) RegisterHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
@@ -58,12 +62,12 @@ func (s *Service) Register(ctx context.Context, name, email, password string) er
 	err := s.execInTx(ctx, func(r *repository.Repository) error {
 		u := r.UserWithEmail(ctx, email)
 		if u != nil {
-			return ErrAlreadyRegistered
+			return fmt.Errorf("email %s: %w", email, ErrAlreadyRegistered)
 		}
 
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			return err
+			return fmt.Errorf("error register: %w", err)
 		}
 
 		return r.CreateUser(ctx, repository.User{
@@ -108,14 +112,14 @@ func (s *Service) Login(ctx context.Context, email, password string) (string, er
 	repo := repository.New(s.db)
 	u := repo.UserWithEmail(ctx, email)
 	if u == nil {
-		return "", ErrNotFound
+		return "", fmt.Errorf("user with email %s: %w", email, ErrNotFound)
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
-		return "", ErrInvalidLogin
+		return "", fmt.Errorf("user password not match: %w", ErrInvalidLogin)
 	}
 
-	token := session.Create()
+	token := session.Create(u.ID)
 	return token, nil
 }
 

@@ -19,6 +19,16 @@ func New(mux *http.ServeMux, addr string) *http.Server {
 func ErrorResponse(w http.ResponseWriter, code int, err error) {
 	slog.Error("Error response", "err", err, "code", code)
 	w.WriteHeader(code)
+	output := struct {
+		Error string `json:"error"`
+	}{
+		Error: err.Error(),
+	}
+
+	err = json.NewEncoder(w).Encode(output)
+	if err != nil {
+		slog.Error("Failed writing error response", "err", err)
+	}
 }
 
 func JSONResponse(w http.ResponseWriter, code int, data any) {

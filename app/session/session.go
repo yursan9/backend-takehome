@@ -7,27 +7,27 @@ import (
 )
 
 var (
-	m            *sync.Mutex
-	sessionStore map[string]struct{}
+	m            sync.Mutex
+	sessionStore map[string]int = make(map[string]int)
 )
 
-func Create() string {
+func Create(id int) string {
 	m.Lock()
 	defer m.Unlock()
 
-	id := generate(8)
-	if _, ok := sessionStore[id]; !ok {
-		sessionStore[id] = struct{}{}
+	key := generate(8)
+	if _, ok := sessionStore[key]; !ok {
+		sessionStore[key] = id
 	}
-	return id
+	return key
 }
 
-func Has(token string) bool {
+func Get(token string) (int, bool) {
 	m.Lock()
 	defer m.Unlock()
 
-	_, ok := sessionStore[token]
-	return ok
+	v, ok := sessionStore[token]
+	return v, ok
 }
 
 func generate(n int) string {
