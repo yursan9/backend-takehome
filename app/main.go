@@ -35,8 +35,8 @@ func main() {
 	mux.HandleFunc("PUT /posts/{id}", user.TokenMiddleware(postService.UpdatePostHandler()))
 	mux.HandleFunc("DELETE /posts/{id}", user.TokenMiddleware(postService.DeletePostHandler()))
 
-	mux.HandleFunc("GET /posts/{id}/comments", NotImplemented)
-	mux.HandleFunc("POST /posts/{id}/comments", NotImplemented)
+	mux.HandleFunc("GET /posts/{id}/comments", postService.CommentsHandler())
+	mux.HandleFunc("POST /posts/{id}/comments", postService.CreateCommentHandler())
 
 	srv := &http.Server{
 		Handler:      mux,

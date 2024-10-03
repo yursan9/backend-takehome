@@ -39,6 +39,14 @@ type Post struct {
 	UpdatedAt time.Time
 }
 
+type Comment struct {
+	ID         int
+	PostID     int
+	AuthorName string
+	Content    string
+	CreatedAt  time.Time
+}
+
 type PostsParam struct {
 	AuthorID int
 	PaginationParam
@@ -90,10 +98,7 @@ func (r *Repository) UserWithEmail(ctx context.Context, email string) *User {
 func (r *Repository) CreateUser(ctx context.Context, data User) error {
 	sqlQuery := `INSERT INTO user (name, email, password_hash) VALUES(?, ?, ?)`
 	_, err := r.db.ExecContext(ctx, sqlQuery, data.Name, data.Email, data.PasswordHash)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (r *Repository) Post(ctx context.Context, id int) *Post {
@@ -124,7 +129,7 @@ func (r *Repository) Posts(ctx context.Context, param PostsParam) ([]Post, int) 
 	var args []any
 
 	if param.AuthorID > 0 {
-		sqlQuery += "WHERE author_id = ?"
+		sqlQuery += " WHERE author_id = ?"
 		args = append(args, param.AuthorID)
 	}
 
@@ -143,28 +148,37 @@ func (r *Repository) Posts(ctx context.Context, param PostsParam) ([]Post, int) 
 func (r *Repository) CreatePost(ctx context.Context, data Post) error {
 	sqlQuery := "INSERT INTO post (title, content, author_id) VALUES(?, ?, ?)"
 	_, err := r.db.ExecContext(ctx, sqlQuery, data.Title, data.Content, data.AuthorID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (r *Repository) UpdatePost(ctx context.Context, id int, data Post) error {
 	sqlQuery := "UPDATE post SET title = ?, content = ? WHERE id = ? AND author_id = ?"
 	_, err := r.db.ExecContext(ctx, sqlQuery, data.Title, data.Content, id, data.AuthorID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (r *Repository) DeletePost(ctx context.Context, id int, authorID int) error {
 	sqlQuery := "DELETE FROM post WHERE id = ? AND author_id = ?"
 	_, err := r.db.ExecContext(ctx, sqlQuery, id, authorID)
+	return err
+}
+
+func (r *Repository) Comments(ctx context.Context, postID int) []Comment {
+	sqlQuery := r.selectQuery("SELECT * FROM comment WHERE post_id = ?")
+	rows, err := r.db.QueryContext(ctx, sqlQuery, postID)
 	if err != nil {
-		return err
+		return nil
 	}
-	return nil
+
+	var res []Comment
+	dbscan.ScanAll(&res, rows)
+	return res
+}
+
+func (r *Repository) CreateComment(ctx context.Context, postID int, data Comment) error {
+	sqlQuery := "INSERT INTO comment (post_id, content, author_name) VALUES(?, ?, ?)"
+	_, err := r.db.ExecContext(ctx, sqlQuery, postID, data.Content, data.AuthorName)
+	return err
 }
 
 func (r *Repository) selectQuery(query string) string {
